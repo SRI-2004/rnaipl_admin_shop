@@ -1,7 +1,6 @@
-
-
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors'); // Import the cors package
 const employeeRouter = require('./routes/employee');
 const adminRouter = require('./routes/admin');
 const supplyRouter = require('./routes/supply');
@@ -11,10 +10,12 @@ require('dotenv').config();
 // Create Express app
 const app = express();
 
+// Use the CORS middleware
+app.use(cors()); // This will allow all origins by default
+
 // Body parser middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
 
 app.use('/admin', adminRouter);
 app.use('/supply', supplyRouter);
