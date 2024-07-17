@@ -5,7 +5,7 @@ const { verifyToken } = require('../utils/middleware');
 const router = express.Router();
 require('dotenv').config();
 // POST request to add cloth supply details
-router.post('/',verifyToken,  async (req, res) => {
+router.post('/add_supply', verifyToken,  async (req, res) => {
   const { item_type, item_size, item_name, Card_No, Emp_Id } = req.body;
 
   try {
@@ -111,7 +111,6 @@ router.get('/get_supply', async (req, res) => {
       Gender: supply.Gender,
       Department_Contact: supply.Department_Contact,
       Emp_Id: supply.Emp_Id,
-      Count: supply.Count
     }));
 
     // Return the formatted supply items

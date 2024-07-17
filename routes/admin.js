@@ -5,6 +5,7 @@ const ItemPosition = require('../models/eligibility')
 const { verifyToken, isAdmin } = require('../utils/middleware');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
+const { Op } = require('sequelize');
 
 router.post('/signup', async (req, res) => {
   const { Emp_Id, Card_No, Password } = req.body;
@@ -58,7 +59,7 @@ router.post('/login', async (req, res) => {
     jwt.sign(
       payload,
       process.env.JWT_SECRET, // Replace with your own secret key for signing JWT
-      { expiresIn: '1m '}, // Token expiration time
+      { expiresIn: '1h'}, // Token expiration time
       (err, token) => {
         if (err) throw err;
         res.json({ token });
@@ -73,33 +74,66 @@ router.post('/login', async (req, res) => {
 
 
 
-router.post('/add_item', async (req, res) => {
-  const { item_name, item_type, gender, positions, departments } = req.body; // Expecting positions to be an array
+
+
+router.post('/add_item', verifyToken, async (req, res) => {
+  const { item_name, item_type, gender, positions, departments } = req.body;
 
   try {
     if (!Array.isArray(positions) || positions.length === 0) {
       return res.status(400).json({ error: 'Positions must be a non-empty array' });
     }
 
+    const genders = gender === 'MaleFemale' ? ['Male', 'Female'] : [gender];
     const newItemPositions = [];
 
-    const genders = gender === 'MaleFemale' ? ['Male', 'Female'] : [gender];
-
     for (const gender of genders) {
-      for(const department of departments){
+      for (const department of departments) {
         for (const position of positions) {
-          const newItemPosition = await ItemPosition.create({ item_name, item_type, gender, department, position });
-          newItemPositions.push(newItemPosition);
+          newItemPositions.push({ item_name, item_type, gender, department, position });
         }
       }
     }
 
-    res.status(201).json(newItemPositions);
+    // Check for existing records
+    const existingItems = await ItemPosition.findAll({
+      where: {
+        [Op.or]: newItemPositions.map(item => ({
+          item_name: item.item_name,
+          item_type: item.item_type,
+          gender: item.gender,
+          department: item.department,
+          position: item.position,
+        })),
+      },
+    });
+
+    // Filter out existing items from newItemPositions
+    const existingItemsSet = new Set(existingItems.map(item => JSON.stringify({
+      item_name: item.item_name,
+      item_type: item.item_type,
+      gender: item.gender,
+      department: item.department,
+      position: item.position,
+    })));
+
+    const filteredNewItemPositions = newItemPositions.filter(item => 
+      !existingItemsSet.has(JSON.stringify(item))
+    );
+
+    // Perform bulk insert for non-existing records
+    if (filteredNewItemPositions.length > 0) {
+      const createdItemPositions = await ItemPosition.bulkCreate(filteredNewItemPositions);
+      res.status(201).json(createdItemPositions);
+    } else {
+      res.status(200).json({ message: 'All items already exist' });
+    }
   } catch (error) {
     console.error('Error creating item positions:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 
 module.exports = router;

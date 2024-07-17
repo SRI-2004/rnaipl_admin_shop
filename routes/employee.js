@@ -7,20 +7,28 @@ const router = express.Router();
 
 
 // GET request to fetch employee details by card_id
-router.get('/get_details',verifyToken,  async (req, res) => {
-  const Card_No = req.query.Card_No;
+router.get('/get_details', async (req, res) => {
+  const { Emp_Id, Card_No } = req.query;
 
   try {
-    // Find employee by card_id
-    const employee = await EmployeeDetails.findOne({ where: { Card_No: Card_No } });
+    let employee;
+    if (Emp_Id) {
+      // Find employee by Emp_Id
+      employee = await EmployeeDetails.findOne({ where: { Emp_Id } });
+    } else if (Card_No) {
+      // Find employee by Card_No
+      employee = await EmployeeDetails.findOne({ where: { Card_No } });
+    } else {
+      return res.status(400).json({ error: 'Please provide either Emp_Id or Card_No' });
+    }
 
     if (!employee) {
       return res.status(404).json({ error: 'Employee not found' });
     }
 
     // Find all supply records for the employee
-    const supplies = await SupplyDetails.findAll({ where: { Card_No: Card_No } });
-    
+    const supplies = await SupplyDetails.findAll({ where: { Emp_Id: employee.Emp_Id } });
+
     // Default values if no supplies are found
     const defaultItem = {
       item_type: 'Default',
@@ -34,29 +42,20 @@ router.get('/get_details',verifyToken,  async (req, res) => {
       where: {
         position: position,
         gender: gender,
-        department: employee.Department
+        department: department
       }
     });
-    
 
-    if(!items){
+    if (!items) {
       return res.status(404).json({ error: 'Not eligible for any item' });
     }
+
     // Extract item names from the results
     const itemNames = items.map(item => ({
       Item_Type: item.item_type,
       Item_Name: item.item_name
-  }));
-
-    // Map supplies to include default values if empty
-    const supplyDetails = supplies.length > 0 ? supplies : [defaultItem];
-
-    // Format supply details for response
-    const formattedSupplies = supplyDetails.map(supply => ({
-      Item_Type: supply.item_type || defaultItem.item_type,
-      Item_Name: supply.item_name || defaultItem.item_name,
-      Item_Size: supply.item_size || defaultItem.item_size
     }));
+
 
     // Return employee details along with supply details
     res.json({
@@ -69,8 +68,7 @@ router.get('/get_details',verifyToken,  async (req, res) => {
       Position: employee.Position,
       Section: employee.Section,
       ContactNo: employee.ContactNo,
-      // Supplies: formattedSupplies,
-      itemNames: itemNames // Array of supply items
+      ItemNames: itemNames // Array of supply items
     });
   } catch (error) {
     console.error('Error fetching employee details:', error);
@@ -86,6 +84,36 @@ router.post('/create_employee',verifyToken,  async (req, res) => {
     res.status(201).json(newEmployee);
   } catch (error) {
     console.error('Error creating new employee:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+router.delete('/delete_employee', verifyToken, async (req, res) => {
+  const { Emp_Id, Card_No } = req.body;
+
+  try {
+    // Verify the Card_No in the request with the one in the token
+    if (req.user.Card_No !== Card_No) {
+      return res.status(401).json({ error: 'Invalid Card_No' });
+    }
+
+    // Find the employee
+    const employee = await EmployeeDetails.findOne({ where: { Emp_Id } });
+
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    // Delete related supply details
+    await SupplyDetails.destroy({ where: { Emp_Id } });
+
+    // Delete the employee
+    await EmployeeDetails.destroy({ where: { Emp_Id } });
+
+    res.status(200).json({ message: 'Employee and related supply details deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting employee:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

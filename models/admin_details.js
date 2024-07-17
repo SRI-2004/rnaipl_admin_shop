@@ -8,6 +8,18 @@ const Admin = sequelize.define('Admin', {
     primaryKey: true,
     autoIncrement: true
   },
+  // Name: {
+  //   type: DataTypes.STRING,
+  //   allowNull: false
+  // },
+  // ContactNo: {
+  //   type: DataTypes.BIGINT,
+  //   allowNull: false
+  // },
+  // is_Admin: {
+  //   type: DataTypes.BOOLEAN,
+  //   allowNull: false
+  // },
   Emp_Id: {
     type: DataTypes.STRING,
     allowNull: false,
