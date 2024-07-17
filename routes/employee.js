@@ -7,7 +7,7 @@ const router = express.Router();
 
 
 // GET request to fetch employee details by card_id
-router.get('/get_details',  async (req, res) => {
+router.get('/get_details',verifyToken,  async (req, res) => {
   const Card_No = req.query.Card_No;
 
   try {
@@ -78,7 +78,7 @@ router.get('/get_details',  async (req, res) => {
   }
 });
 
-router.post('/create_employee',  async (req, res) => {
+router.post('/create_employee',verifyToken,  async (req, res) => {
   const { Emp_Id, Card_No, Name, Gender, Department, Position, Section, ContactNo } = req.body;
 
   try {

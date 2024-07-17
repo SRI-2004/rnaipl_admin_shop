@@ -5,7 +5,7 @@ const { verifyToken } = require('../utils/middleware');
 const router = express.Router();
 require('dotenv').config();
 // POST request to add cloth supply details
-router.post('/',  async (req, res) => {
+router.post('/',verifyToken,  async (req, res) => {
   const { item_type, item_size, item_name, Card_No, Emp_Id } = req.body;
 
   try {
@@ -15,6 +15,7 @@ router.post('/',  async (req, res) => {
     if (!employee) {
       return res.status(404).json({ error: 'Employee not found' });
     }
+
     const Name = employee.Name;
     const Gender = employee.Gender;
     const Department = employee.Department;
@@ -32,19 +33,23 @@ router.post('/',  async (req, res) => {
       const existingSupply = await SupplyDetails.findOne({
         where: {
           item_type: item_type[i],
-          item_size: item_size[i],
           item_name: item_name[i],
           Emp_Id
         }
       });
 
       if (existingSupply) {
-        // If it exists, increment the count
-        existingSupply.Count += 1;
-        await existingSupply.save();
-        newSupplies.push(existingSupply);
+        if (existingSupply.item_size === item_size[i]) {
+          // If all three values are the same, ignore this item
+          continue;
+        } else {
+          // If it exists and only item_size is different, update the item size to the new value
+          existingSupply.item_size = item_size[i];
+          await existingSupply.save();
+          newSupplies.push(existingSupply);
+        }
       } else {
-        // If it doesn't exist, create a new supply record with count = 1
+        // If it doesn't exist, create a new supply record
         const newSupply = await SupplyDetails.create({
           item_type: item_type[i],
           item_size: item_size[i],
@@ -85,4 +90,38 @@ router.post('/',  async (req, res) => {
   }
 });
 
+
+router.get('/get_supply',verifyToken, async (req, res) => {
+  try {
+    // Fetch all supply items from the SupplyDetails table
+    const supplies = await SupplyDetails.findAll();
+
+    // Check if there are any supply items
+    if (supplies.length === 0) {
+      return res.status(404).json({ error: 'No supply items found' });
+    }
+
+    // Format the supply items for the response
+    const formattedSupplies = supplies.map(supply => ({
+      Item_Type: supply.item_type,
+      Item_Name: supply.item_name,
+      Item_Size: supply.item_size,
+      Card_No: supply.Card_No,
+      Name: supply.Name,
+      Gender: supply.Gender,
+      Department_Contact: supply.Department_Contact,
+      Emp_Id: supply.Emp_Id,
+      Count: supply.Count
+    }));
+
+    // Return the formatted supply items
+    res.json(formattedSupplies);
+  } catch (error) {
+    console.error('Error fetching supply items:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
+
+
