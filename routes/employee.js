@@ -89,7 +89,7 @@ router.post('/create_employee',  async (req, res) => {
 });
 
 
-router.post('/delete_employee',verifyToken,async (req, res) => {
+router.post('/delete_employee',async (req, res) => {
   const { Emp_Id, Card_No } = req.body;
 
   try {
