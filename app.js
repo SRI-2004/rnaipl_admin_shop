@@ -5,6 +5,8 @@ const employeeRouter = require('./routes/employee');
 const adminRouter = require('./routes/admin');
 const supplyRouter = require('./routes/supply');
 const db = require('./utils/db'); // Import the db.js file
+
+const {requestLogger} = require('./utils/middleware');
 require('dotenv').config();
 
 // Create Express app
@@ -17,9 +19,12 @@ app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
+
 // Body parser middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(requestLogger);
 
 app.use('/admin', adminRouter);
 app.use('/supply', supplyRouter);

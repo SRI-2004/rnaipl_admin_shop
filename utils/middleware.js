@@ -28,4 +28,16 @@ const isAdmin = (req, res, next) => {
   next(); 
 };
 
-module.exports = { verifyToken, isAdmin };
+const chalk = require('chalk');
+const requestLogger = (req, res, next) => {
+  res.on('finish', () => {
+    // Log the status code and request method
+    console.log(chalk.green(`[REQUEST] ${req.method} ${req.originalUrl} - Status: ${res.statusCode}`));
+  });
+  next();
+};
+// Use the middleware in your Express app
+
+
+
+module.exports = { verifyToken, isAdmin, requestLogger };

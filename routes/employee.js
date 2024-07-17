@@ -76,7 +76,7 @@ router.get('/get_details', async (req, res) => {
   }
 });
 
-router.post('/create_employee',verifyToken,  async (req, res) => {
+router.post('/create_employee',  async (req, res) => {
   const { Emp_Id, Card_No, Name, Gender, Department, Position, Section, ContactNo } = req.body;
 
   try {
@@ -89,12 +89,13 @@ router.post('/create_employee',verifyToken,  async (req, res) => {
 });
 
 
-router.delete('/delete_employee', verifyToken, async (req, res) => {
+router.post('/delete_employee',verifyToken,async (req, res) => {
   const { Emp_Id, Card_No } = req.body;
 
   try {
+    console.log(req.user)
     // Verify the Card_No in the request with the one in the token
-    if (req.user.Card_No !== Card_No) {
+    if (req.user.admin.Card_No !== Card_No) {
       return res.status(401).json({ error: 'Invalid Card_No' });
     }
 
