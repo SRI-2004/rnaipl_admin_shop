@@ -5,7 +5,7 @@ const EmployeeDetails = require('../models/employee_details');
 const { verifyToken } = require('../utils/middleware');
 require('dotenv').config();
 const { Op } = require('sequelize');
-const { sendWhatsAppMessage } = require('../services/whatsapp');
+const sendWhatsAppMessage = require('../services/whatsapp');
 
 
 // POST request to add cloth supply details
