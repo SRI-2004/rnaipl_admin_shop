@@ -91,7 +91,7 @@ router.post('/',verifyToken,  async (req, res) => {
 });
 
 
-router.get('/get_supply',verifyToken, async (req, res) => {
+router.get('/get_supply', async (req, res) => {
   try {
     // Fetch all supply items from the SupplyDetails table
     const supplies = await SupplyDetails.findAll();
