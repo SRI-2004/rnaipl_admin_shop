@@ -62,7 +62,13 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1h'}, // Token expiration time
       (err, token) => {
         if (err) throw err;
-        res.json({ token });
+        
+        res.json({ 
+          token: token,
+          Name: admin.Name,
+          ContactNo: admin.ContactNo,
+          Emp_Id: admin.Emp_Id 
+        });
       }
     );
 

@@ -1,11 +1,15 @@
 const express = require('express');
-const SupplyDetails = require('../models/supply_details');
-const EmployeeDetails = require('../models/employee_details'); // Import EmployeeDetails model
-const { verifyToken } = require('../utils/middleware');
 const router = express.Router();
+const SupplyDetails = require('../models/supply_details');
+const EmployeeDetails = require('../models/employee_details');
+const { verifyToken } = require('../utils/middleware');
 require('dotenv').config();
+const { Op } = require('sequelize');
+const { sendWhatsAppMessage } = require('../services/whatsapp');
+
+
 // POST request to add cloth supply details
-router.post('/add_supply', verifyToken,  async (req, res) => {
+router.post('/add_supply', verifyToken, async (req, res) => {
   const { item_type, item_size, item_name, Card_No, Emp_Id } = req.body;
 
   try {
@@ -16,10 +20,7 @@ router.post('/add_supply', verifyToken,  async (req, res) => {
       return res.status(404).json({ error: 'Employee not found' });
     }
 
-    const Name = employee.Name;
-    const Gender = employee.Gender;
-    const Department = employee.Department;
-    const Department_Contact = employee.ContactNo;
+    const { Name, Gender, Department, ContactNo: Department_Contact } = employee;
 
     // Ensure that all item arrays are of the same length
     if (item_type.length !== item_size.length || item_type.length !== item_name.length) {
@@ -27,29 +28,39 @@ router.post('/add_supply', verifyToken,  async (req, res) => {
     }
 
     const newSupplies = [];
+    const suppliesToCheck = item_type.map((type, i) => ({
+      item_type: type,
+      item_name: item_name[i],
+      Emp_Id
+    }));
+
+    // Check existing supplies in a single query
+    const existingSupplies = await SupplyDetails.findAll({
+      where: {
+        [Op.or]: suppliesToCheck
+      }
+    });
+
+    const existingSuppliesMap = new Map();
+    existingSupplies.forEach(supply => {
+      existingSuppliesMap.set(`${supply.item_type}-${supply.item_name}-${supply.Emp_Id}`, supply);
+    });
 
     for (let i = 0; i < item_type.length; i++) {
-      // Check if the item already exists for the employee
-      const existingSupply = await SupplyDetails.findOne({
-        where: {
-          item_type: item_type[i],
-          item_name: item_name[i],
-          Emp_Id
-        }
-      });
+      const key = `${item_type[i]}-${item_name[i]}-${Emp_Id}`;
+      const existingSupply = existingSuppliesMap.get(key);
 
       if (existingSupply) {
         if (existingSupply.item_size === item_size[i]) {
-          // If all three values are the same, ignore this item
-          continue;
+          continue; // Ignore if all three values are the same
         } else {
-          // If it exists and only item_size is different, update the item size to the new value
+          // Update item size if it exists and only item_size is different
           existingSupply.item_size = item_size[i];
           await existingSupply.save();
           newSupplies.push(existingSupply);
         }
       } else {
-        // If it doesn't exist, create a new supply record
+        // Create new supply record if it doesn't exist
         const newSupply = await SupplyDetails.create({
           item_type: item_type[i],
           item_size: item_size[i],
@@ -70,18 +81,7 @@ router.post('/add_supply', verifyToken,  async (req, res) => {
     const messageBody = `Greetings from RNAIPL Admin Store!!\n\nHey ${Name},\nEmployee_ID : ${Emp_Id}\n\nYour Order has been received. Below is your order confirmation:\n\n${itemDetailsMessage}\n\n`;
 
     // Send WhatsApp message
-    const accountSid = process.env.TWILIO_SID;  // Replace with your Twilio Account SID
-    const authToken = process.env.TWILIO_AUTH_TOKEN;  // Replace with your Twilio Auth Token
-    const client = require('twilio')(accountSid, authToken);
-
-    client.messages
-      .create({
-        body: messageBody,
-        from: process.env.TWILIO_WHATSAPP_NO, // Your Twilio WhatsApp number
-        to: `whatsapp:+91${employee.ContactNo}` // Concatenated with +91 for India
-      })
-      .then(message => console.log(message.sid))
-      .catch(error => console.error('Error sending WhatsApp message:', error));
+    sendWhatsAppMessage(employee, messageBody);
 
     res.status(201).json(newSupplies);
   } catch (error) {
@@ -89,6 +89,7 @@ router.post('/add_supply', verifyToken,  async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 
 router.get('/get_supply', async (req, res) => {
