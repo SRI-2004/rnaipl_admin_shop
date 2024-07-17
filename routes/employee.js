@@ -89,35 +89,35 @@ router.post('/create_employee',  async (req, res) => {
 });
 
 
-router.post('/delete_employee',async (req, res) => {
-  const { Emp_Id, Card_No } = req.body;
+// router.post('/delete_employee',async (req, res) => {
+//   const { Emp_Id, Card_No } = req.body;
 
-  try {
-    console.log(req.user)
-    // Verify the Card_No in the request with the one in the token
-    if (req.user.admin.Card_No !== Card_No) {
-      return res.status(401).json({ error: 'Invalid Card_No' });
-    }
+//   try {
+//     console.log(req.user)
+//     // Verify the Card_No in the request with the one in the token
+//     if (req.user.admin.Card_No !== Card_No) {
+//       return res.status(401).json({ error: 'Invalid Card_No' });
+//     }
 
-    // Find the employee
-    const employee = await EmployeeDetails.findOne({ where: { Emp_Id } });
+//     // Find the employee
+//     const employee = await EmployeeDetails.findOne({ where: { Emp_Id } });
 
-    if (!employee) {
-      return res.status(404).json({ error: 'Employee not found' });
-    }
+//     if (!employee) {
+//       return res.status(404).json({ error: 'Employee not found' });
+//     }
 
-    // Delete related supply details
-    await SupplyDetails.destroy({ where: { Emp_Id } });
+//     // Delete related supply details
+//     await SupplyDetails.destroy({ where: { Emp_Id } });
 
-    // Delete the employee
-    await EmployeeDetails.destroy({ where: { Emp_Id } });
+//     // Delete the employee
+//     await EmployeeDetails.destroy({ where: { Emp_Id } });
 
-    res.status(200).json({ message: 'Employee and related supply details deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting employee:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+//     res.status(200).json({ message: 'Employee and related supply details deleted successfully' });
+//   } catch (error) {
+//     console.error('Error deleting employee:', error);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
 
 module.exports = router;
 
