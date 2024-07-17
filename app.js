@@ -13,12 +13,14 @@ require('dotenv').config();
 const app = express();
 
 // Use the CORS middleware
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,PUT,PATCH,POST,DELETE");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
+const corsOptions = {
+  origin: '*', // Allow all origins (you can restrict this to specific origins)
+  methods: ['GET', 'PUT', 'PATCH', 'POST', 'DELETE'], // Allow specific methods
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'] // Allow specific headers
+};
+
+app.use(cors(corsOptions));
+
 
 // Body parser middleware
 app.use(bodyParser.json());
