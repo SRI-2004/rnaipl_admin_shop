@@ -96,7 +96,7 @@ router.post('/delete_employee', verifyToken,async (req, res) => {
     console.log(req.user)
     // Verify the Card_No in the request with the one in the token
     if (req.user.admin.Card_No !== Card_No) {
-      return res.status(401).json({ error: 'Invalid Card_No' });
+      return res.status(404).json({ error: 'Invalid Card_No' });
     }
 
     // Find the employee
