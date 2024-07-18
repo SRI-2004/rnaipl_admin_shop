@@ -16,7 +16,7 @@ const app = express();
 const corsOptions = {
   origin: '*', // Allow all origins (you can restrict this to specific origins)
   methods: ['GET', 'PUT', 'PATCH', 'POST', 'DELETE'], // Allow specific methods
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'] // Allow specific headers
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept','Authorization'] // Allow specific headers
 };
 
 app.use(cors(corsOptions));
