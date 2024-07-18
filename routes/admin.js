@@ -64,7 +64,7 @@ router.post('/login', async (req, res) => {
         if (err) throw err;
         
         res.json({ 
-          token,
+          token:token
           // Name: admin.Name,
           // ContactNo: admin.ContactNo,
           // Emp_Id: admin.Emp_Id 
@@ -82,7 +82,7 @@ router.post('/login', async (req, res) => {
 
 
 
-router.post('/add_item',  async (req, res) => {
+router.post('/add_item',verifyToken,  async (req, res) => {
   const { item_name, item_type, gender, positions, departments } = req.body;
 
   try {

@@ -9,7 +9,7 @@ const sendWhatsAppMessage = require('../services/whatsapp');
 
 
 // POST request to add cloth supply details
-router.post('/add_supply', async (req, res) => {
+router.post('/add_supply',verifyToken, async (req, res) => {
   const { item_type, item_size, item_name, Card_No, Emp_Id } = req.body;
 
   try {
